@@ -1034,6 +1034,7 @@ echo ""
 
 setup_wert() { docker compose exec -T db psql -U rednetz -d rednetz -tAc "SELECT coalesce(value->>'$2', '') FROM settings WHERE key = '$1'" 2>/dev/null | tr -d '[:space:]'; }
 setup_fertig() { [ "$(setup_wert setup done)" = "true" ]; }
+assistent_offen() { [ "$(setup_wert assistent offen)" = "true" ]; }
 kurz_datei=""; kurz_link=""; kurz_web=""; direkt_url=""
 direkt_freigeben() {
   if grep -q '^RN_BIND=' .env; then sed -i 's|^RN_BIND=.*|RN_BIND=0.0.0.0|' .env; else echo "RN_BIND=0.0.0.0" >> .env; fi
@@ -1053,6 +1054,14 @@ kurz_weg() {
   case "$kurz_web" in nginx) nginx -t >/dev/null 2>&1 && { systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || systemctl start nginx 2>/dev/null || nginx || pkill -HUP -o -x nginx; } ;; apache2) { systemctl reload apache2 2>/dev/null || apache2ctl graceful; } ;; httpd) { systemctl reload httpd 2>/dev/null || httpd -k graceful; } ;; esac
   say "==> Kurzzeit-Eintrag fuer http://${ip} wieder entfernt." "==> Temporary entry for http://${ip} removed again."
   kurz_datei=""
+}
+kurz_abbruch() {
+  local neu=""
+  kurz_weg
+  setup_fertig || return 0
+  neu=$(setup_wert net domain | tr 'A-Z' 'a-z' || true)
+  say "==> Die Einrichtung ist gespeichert. Der Assistent geht nach der Anmeldung weiter." "==> The setup is saved. The wizard continues after you sign in."
+  say "    Virtual Host spaeter:  sudo bash install.sh --domain ${neu:-netz.example.com}" "    Virtual host later:  sudo bash install.sh --domain ${neu:-netz.example.com}"
 }
 umzug_anbieten() {
   local ziel port zc zbild stempel sicher datei ok=""
@@ -1117,7 +1126,7 @@ if [ "$MODUS" = "port" ] && [ -z "$vhost_angelegt" ] && { [ -z "$DOMAIN" ] || [ 
       else httpd -t >/dev/null 2>&1 && systemctl reload httpd || { say "    httpd -t schlaegt fehl — Kurzzeit-Eintrag wieder entfernt." "    httpd -t fails — temporary entry removed again."; kurz_weg; }; fi
     fi
     if [ -n "$kurz_datei" ]; then
-      trap 'echo; kurz_weg; exit 130' INT TERM
+      trap 'echo; kurz_abbruch; exit 130' INT TERM
       trap 'kurz_weg' EXIT
       echo ""
       say "==> Oeffne jetzt im Browser:  http://${ip}   und gib den Setup-Code von oben ein." "==> Now open in your browser:  http://${ip}   and enter the setup code from above."
@@ -1127,15 +1136,36 @@ if [ "$MODUS" = "port" ] && [ -z "$vhost_angelegt" ] && { [ -z "$DOMAIN" ] || [ 
       echo -n "    $(s "Warte auf die Einrichtung" "Waiting for the setup") "
       for _ in $(seq 1 720); do setup_fertig && break; echo -n "."; sleep 10; done
       echo ""
-      kurz_weg
-      trap - INT TERM EXIT
+      # Das Konto entsteht schon in Schritt 4, der Assistent laeuft danach im selben Browser weiter und zeigt in Schritt 7 den
+      # Agent-Befehl mit der Domain. Darum Virtual Host und Zertifikat sofort, den Kurzzeit-Eintrag aber erst nach dem Assistenten.
+      neu=""
       if setup_fertig; then
         neu=$(setup_wert net domain | tr 'A-Z' 'a-z' || true)
         if [[ "$neu" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ ]]; then
           DOMAIN="$neu"
           if grep -q '^RN_PROXY_DOMAIN=' .env; then sed -i "s|^RN_PROXY_DOMAIN=.*|RN_PROXY_DOMAIN=$DOMAIN|" .env; else echo "RN_PROXY_DOMAIN=$DOMAIN" >> .env; fi
-          say "==> Einrichtung abgeschlossen. Domain aus dem Assistenten: $DOMAIN" "==> Setup complete. Domain from the wizard: $DOMAIN"
+          say "==> Konto angelegt. Domain aus dem Assistenten: $DOMAIN" "==> Account created. Domain from the wizard: $DOMAIN"
           vhost_einrichten
+        else
+          neu=""
+        fi
+        if assistent_offen; then
+          say "==> Fuehre den Assistenten im Browser bis „Fertig“ zu Ende, so lange bleibt http://${ip} erreichbar." "==> Finish the wizard in your browser up to “Done”, http://${ip} stays reachable until then."
+          echo -n "    $(s "Warte auf den Abschluss des Assistenten" "Waiting for the wizard to finish") "
+          for _ in $(seq 1 720); do assistent_offen || break; echo -n "."; sleep 10; done
+          echo ""
+        fi
+        if assistent_offen; then
+          say "==> Der Assistent wurde nicht abgeschlossen. Nach der Anmeldung geht er im Browser weiter." "==> The wizard was not finished. It continues in your browser after you sign in."
+        else
+          say "==> Assistent abgeschlossen. http://${ip} bleibt noch ${KURZ_NACHLAUF:-60} Sekunden erreichbar, danach geht es hier weiter." "==> Wizard finished. http://${ip} stays reachable for another ${KURZ_NACHLAUF:-60} seconds, then this continues here."
+          sleep "${KURZ_NACHLAUF:-60}"
+        fi
+      fi
+      kurz_weg
+      trap - INT TERM EXIT
+      if setup_fertig; then
+        if [ -n "$neu" ]; then
           if [ -n "$fremd" ]; then umzug_anbieten || true; exit 0; fi
           if [ -n "$vhost_angelegt" ]; then
             if [ -n "${https_ok:-}" ]; then say "==> Fertig. RedNetz laeuft unter  https://${DOMAIN}" "==> Done. RedNetz runs at  https://${DOMAIN}"; else say "==> Fertig. RedNetz laeuft unter  http://${DOMAIN}  (HTTPS: certbot --nginx -d ${DOMAIN} --redirect)" "==> Done. RedNetz runs at  http://${DOMAIN}  (HTTPS: certbot --nginx -d ${DOMAIN} --redirect)"; fi
