@@ -1,0 +1,8 @@
+services:
+  app:
+    ports:
+      - "${RN_BIND:-127.0.0.1}:${RN_PORT:?Bitte RN_PORT in .env setzen}:3000"
+    environment:
+      RN_PORT: ${RN_PORT}
+      RN_BIND: ${RN_BIND:-127.0.0.1}
+      RN_PROXY_DOMAIN: ${RN_PROXY_DOMAIN:-}

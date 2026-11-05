@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "datum": "2026-11-05",
+  "hinweise": {
+    "de": [
+      "Erste Version: Server, Ports, Docker, Domains, Monitoring, Netzwerkkarte und Logs an einer Stelle.",
+      "Cloudflare und Plesk sind Beta: Sie liefen bisher nur gegen Nachbauten aus der Doku."
+    ],
+    "en": [
+      "First version: servers, ports, Docker, domains, monitoring, network map and logs in one place.",
+      "Cloudflare and Plesk are beta: so far they have only run against replicas built from the docs."
+    ]
+  }
+}

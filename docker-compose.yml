@@ -1,0 +1,46 @@
+services:
+  app:
+    image: ghcr.io/theredstonee/rednetz:latest
+    restart: unless-stopped
+    environment:
+      NUXT_DB_URL: postgres://rednetz:${DB_PASSWORD:?Bitte DB_PASSWORD in .env setzen}@db:5432/rednetz
+      TZ: ${TZ:-Europe/Berlin}
+      RN_RESET_2FA: ${RN_RESET_2FA:-}
+      RN_LANG: ${RN_LANG:-de}
+      RN_TUNNEL_METRICS: ${RN_TUNNEL_METRICS:-cloudflared:2000}
+    volumes:
+      - daten:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    expose: ["3000"]
+    stop_grace_period: 20s
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rednetz
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: rednetz
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rednetz -d rednetz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.9.3
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run
+    environment:
+      TUNNEL_TOKEN: ${RN_TUNNEL_TOKEN:-}
+    depends_on:
+      - app
+
+volumes:
+  db:
+  daten:
