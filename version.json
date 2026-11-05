@@ -1,14 +1,24 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "datum": "2026-11-05",
   "hinweise": {
     "de": [
-      "Erste Version: Server, Ports, Docker, Domains, Monitoring, Netzwerkkarte und Logs an einer Stelle.",
-      "Cloudflare und Plesk sind Beta: Sie liefen bisher nur gegen Nachbauten aus der Doku."
+      "Kopieren geht jetzt auch, wenn RedNetz über http://<IP> läuft. Klappt es im Browser nicht, steht der Text markiert zum Kopieren von Hand da.",
+      "Der Befehl für einen neuen Server erscheint erst, wenn die Domain mit gültigem Zertifikat erreichbar ist. Sonst sagt RedNetz, was fehlt. Den Schritt im Assistenten kannst du überspringen und den Server später unter „Server anbinden“ hinzufügen.",
+      "Cloudflare-Token werden geprüft: Leerzeichen und Zeilenumbrüche fallen weg, ein Global API Key wird abgelehnt, und Fehler von Cloudflare kommen als klare Meldung.",
+      "Domains und DNS unterscheiden jetzt Cloudflare Tunnel, Proxy und Nur DNS, mit Filter und Zählung. Ein Tunnel hat keine Ursprungs-IP, dort steht „Ziel unbekannt“, statt einen Server zu raten.",
+      "Viele Domains: Karte, Domain-Liste und DNS-Seite zeigen jede Hauptdomain als klappbare Zeile mit Zählung. Einträge laden erst beim Aufklappen, die Karte zeichnet nur, was im Bild liegt.",
+      "Für API-Nutzer: GET /api/v1/karte und GET /api/v1/dns liefern jetzt eine Zusammenfassung je Zone. Die bisherige vollständige Antwort gibt es mit ?alles=1 (Karte) und ?alle=1 (DNS).",
+      "Cloudflare bleibt Beta. Plesk ist weiter Beta und lief bisher nur gegen einen Nachbau aus der Doku."
     ],
     "en": [
-      "First version: servers, ports, Docker, domains, monitoring, network map and logs in one place.",
-      "Cloudflare and Plesk are beta: so far they have only run against replicas built from the docs."
+      "Copying now also works when RedNetz runs on http://<IP>. If the browser refuses, the text is shown selected so you can copy it by hand.",
+      "The command for a new server only appears once the domain is reachable with a valid certificate. Otherwise RedNetz tells you what is missing. You can skip the step in the wizard and add the server later under “Connect server”.",
+      "Cloudflare tokens are checked: spaces and line breaks are removed, a Global API Key is rejected, and errors from Cloudflare come as a clear message.",
+      "Domains and DNS now tell Cloudflare Tunnel, Proxy and DNS only apart, with filter and counts. A tunnel has no origin IP, so it shows “Target unknown” instead of guessing a server.",
+      "Many domains: map, domain list and DNS page show each main domain as a collapsible row with counts. Records load only when expanded, and the map only draws what is in view.",
+      "For API users: GET /api/v1/karte and GET /api/v1/dns now return a summary per zone. The previous full response is available with ?alles=1 (map) and ?alle=1 (DNS).",
+      "Cloudflare stays beta. Plesk is still beta and has only run against a replica built from the docs."
     ]
   }
 }
