@@ -255,7 +255,7 @@ if [ -n "$WEG" ]; then
     if [ "$daten" = "ja" ]; then docker compose down -v --remove-orphans || true; else docker compose down --remove-orphans || true; fi
     docker image rm ghcr.io/theredstonee/rednetz:latest >/dev/null 2>&1 || true
   fi
-  rm -f /etc/cron.d/rednetz-update
+  rm -f /etc/cron.d/rednetz-update /usr/local/bin/rednetz-update
   if [ -f /etc/systemd/system/rednetz-update.path ]; then
     systemctl disable --now rednetz-update.path rednetz-update.timer >/dev/null 2>&1 || true
     rm -f /etc/systemd/system/rednetz-update.path /etc/systemd/system/rednetz-update.service /etc/systemd/system/rednetz-update.timer /usr/local/bin/rednetz-update
